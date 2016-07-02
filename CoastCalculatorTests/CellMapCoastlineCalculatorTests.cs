@@ -103,11 +103,53 @@ namespace CoastCalculator
 			var sut = fixture.CreateSUT();
 			
 			foreach (var xy in shapeCells
-			         .Select((n,i)=>new {n,i})
-			         .GroupBy(n=>n.i/2)
+			         .Select((n,i) => new {n,i})
+			         .GroupBy(n => n.i/2)
 			         .Select(g=>new {x=g.First().n,y=g.Last().n}))
 			{
-				Console.WriteLine(xy);
+				sut.MarkLandAt(xy.y, xy.x);
+			}
+			
+			var actual = sut.GetPerimeter();
+			
+			Assert.AreEqual(expectedPerimeter, actual, "perimeter");
+		}
+		
+		[TestCase(6, 5, 24, 1, 1, 2, 1, 1, 2, 2, 2, 4, 1, 1, 4, 2, 4, 3, 4, 4, 4, 5, 4)]
+		[TestCase(4, 4, 20, 0, 0, 1, 0, 0, 1, 1, 1, 3, 0, 2, 2, 0, 3)]
+		public void Can_calculate_perimeter_on_islands(int height, int width, int expectedPerimeter, params int[] shapeCells)
+		{
+			var fixture = new Fixture()
+				.WithMapHeight(height)
+				.WithMapWidth(width);
+			var sut = fixture.CreateSUT();
+			
+			foreach (var xy in shapeCells
+			         .Select((n,i) => new {n,i})
+			         .GroupBy(n => n.i/2)
+			         .Select(g=>new {x=g.First().n,y=g.Last().n}))
+			{
+				sut.MarkLandAt(xy.y, xy.x);
+			}
+			
+			var actual = sut.GetPerimeter();
+			
+			Assert.AreEqual(expectedPerimeter, actual, "perimeter");
+		}
+		
+		[TestCase(5, 4, 12, 1, 1, 2, 1, 3, 1, 1, 2, 3, 2, 1, 3, 2, 3)]
+		public void Can_calculate_with_lakes(int height, int width, int expectedPerimeter, params int[] shapeCells)
+		{
+			var fixture = new Fixture()
+				.WithMapHeight(height)
+				.WithMapWidth(width);
+			var sut = fixture.CreateSUT();
+			
+			foreach (var xy in shapeCells
+			         .Select((n,i) => new {n,i})
+			         .GroupBy(n => n.i/2)
+			         .Select(g=>new {x=g.First().n,y=g.Last().n}))
+			{
 				sut.MarkLandAt(xy.y, xy.x);
 			}
 			
