@@ -26,68 +26,80 @@ namespace CoastCalculator
 
 		private readonly int mapHeight;
 
-		private readonly int[] coastPointX;
-
-		private readonly int[] coastPointY;
-
-		private int lastCoastPointIndex = -1;
+		private readonly bool[][] landCellsWidthByHeight;
 
 		public CellMapCoastlineCalculator(int mapWidth, int mapHeight)
 		{
 			this.mapHeight = mapHeight;
 			this.mapWidth = mapWidth;
-			coastPointX = new int[mapHeight + 1];
-			coastPointY = new int[mapWidth + 1];
+			landCellsWidthByHeight = new bool[mapWidth][];
+			for (int x = 0; x < mapWidth; x++)
+			{
+				landCellsWidthByHeight[x] = new bool[mapHeight];
+			}
 		}
 
 		public void MarkLandAt(int cellX, int cellY)
-		{lastCoastPointIndex++;
-			//AddPointsForCell(cellX, cellY);
-		}
-
-		public int GetPerimeter()
 		{
-			if (lastCoastPointIndex >= 0)
-			{
-				return 4;
-			}
-			
-			return 0;
-		}
-
-		private void AddPointForCell(int cellX, int cellY, Corner corner)
-		{
-			lastCoastPointIndex++;
-			switch (corner)
-			{
-				case Corner.UpperLeft:
-					coastPointX[lastCoastPointIndex] = cellX;
-					coastPointY[lastCoastPointIndex] = cellY;
-					break;
-				case Corner.UpperRight:
-					coastPointX[lastCoastPointIndex] = cellX;
-					coastPointY[lastCoastPointIndex] = cellY + 1;
-					break;
-				case Corner.LowerLeft:
-					coastPointX[lastCoastPointIndex] = cellX + 1;
-					coastPointY[lastCoastPointIndex] = cellY;
-					break;
-				case Corner.LowerRigth:
-					coastPointX[lastCoastPointIndex] = cellX + 1;
-					coastPointY[lastCoastPointIndex] = cellY + 1;
-					break;
-				default:
-					throw new ArgumentOutOfRangeException();
-			}
+			landCellsWidthByHeight[cellX][cellY] = true;
 		}
 		
-		private enum Corner
+		public int GetPerimeter()
 		{
-			UpperLeft,
-			UpperRight,
-			LowerLeft,
-			LowerRigth
+			var perimeter = 0;
+			for (int x = 0; x < mapWidth; x++)
+			{
+				for (int y = 0; y < mapHeight; y++)
+				{
+					perimeter+=SeaNeighbourPerimeter(x,y);
+				}
+			}
+			
+			return perimeter;
+		}
+		
+		private int SeaNeighbourPerimeter(int cellX, int cellY)
+		{
+			if (!IsLand(cellX, cellY))
+			{
+				return 0;
+			}
+					
+			var perimeter = 0;
+			if (IsSea(cellX - 1, cellY))
+			{
+				perimeter++;
+			}
+			if (IsSea(cellX, cellY - 1))
+			{
+				perimeter++;
+			}
+			if (IsSea(cellX + 1, cellY))
+			{
+				perimeter++;
+			}
+			if (IsSea(cellX, cellY + 1))
+			{
+				perimeter++;
+			}
+		
+			return perimeter;
+		}
+		
+		private bool IsSea(int cellX, int cellY)
+		{
+			if (cellX < 0 || cellX >= mapWidth ||
+			    cellY < 0 || cellY >= mapHeight)
+			{
+				return true;
+			}
+			
+			return !landCellsWidthByHeight[cellX][cellY];
+		}
+		
+		private bool IsLand(int cellX, int cellY)
+		{
+			return landCellsWidthByHeight[cellX][cellY];
 		}
 	}
-
 }

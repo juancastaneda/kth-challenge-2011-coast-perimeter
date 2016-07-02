@@ -1,5 +1,7 @@
 ﻿
 using System;
+using System.Linq;
+using System.Collections.Generic;
 using NUnit.Framework;
 
 namespace CoastCalculator
@@ -58,6 +60,60 @@ namespace CoastCalculator
 		
 			const int expected = 1 * 4;
 			Assert.AreEqual(expected, actual, "perimeter");
+		}
+		
+		[TestCase(10, 10)]
+		[TestCase(5, 6)]
+		[TestCase(1, 10)]
+		[TestCase(10, 1)]
+		[TestCase(1, 1)]
+		public void Can_calculate_perimeter_when_all_are_land_cells(int width, int height)
+		{
+			var fixture = new Fixture()
+				.WithMapHeight(height)
+				.WithMapWidth(width);
+			var sut = fixture.CreateSUT();
+			
+			for (int x = 0; x < width; x++)
+			{
+				for (int y = 0; y < height; y++)
+				{
+					sut.MarkLandAt(x, y);
+				}
+			}
+			
+			var actual = sut.GetPerimeter();
+			var expected = (height * 2) + (width * 2);
+			
+			Assert.AreEqual(expected, actual, "perimeter");
+		}
+		
+		[TestCase(5, 4, 10, 1, 1, 2, 1, 3, 1, 2, 2)]
+		[TestCase(5, 4, 10, 1, 1, 2, 1, 3, 1, 1, 2)]
+		[TestCase(5, 4, 14, 1, 1, 2, 1, 3, 1, 1, 2, 3, 2, 1, 3)]
+		[TestCase(4, 3, 10, 1, 1, 2, 1, 3, 1, 2, 2)]
+		[TestCase(4, 3, 10, 1, 1, 2, 1, 3, 1, 1, 2)]
+		[TestCase(4, 4, 14, 1, 1, 2, 1, 3, 1, 1, 2, 3, 2, 1, 3)]
+		[TestCase(6, 5, 24, 1, 1, 2, 1, 3, 1, 4, 1, 5, 1, 1, 2, 2, 2, 3, 2, 1, 3, 1, 4, 2, 4, 3, 4, 4, 4)]
+		public void Can_calculate_perimeter_shape(int height, int width, int expectedPerimeter, params int[] shapeCells)
+		{
+			var fixture = new Fixture()
+				.WithMapHeight(height)
+				.WithMapWidth(width);
+			var sut = fixture.CreateSUT();
+			
+			foreach (var xy in shapeCells
+			         .Select((n,i)=>new {n,i})
+			         .GroupBy(n=>n.i/2)
+			         .Select(g=>new {x=g.First().n,y=g.Last().n}))
+			{
+				Console.WriteLine(xy);
+				sut.MarkLandAt(xy.y, xy.x);
+			}
+			
+			var actual = sut.GetPerimeter();
+			
+			Assert.AreEqual(expectedPerimeter, actual, "perimeter");
 		}
 		
 		private sealed class Fixture
