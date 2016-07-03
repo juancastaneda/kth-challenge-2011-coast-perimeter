@@ -12,9 +12,9 @@ namespace CoastCalculator
 			CellMapCoastlineCalculator calculator = null;
 			int height = 2;
 			int width = 0;
-			var row = 0;
+			var row = -1;
 			string line;	
-			while ((line = Console.ReadLine()) != null && row < height - 1)
+			while ((row < height) && (line = Console.ReadLine()) != null)
 			{
 				if (calculator == null)
 				{
@@ -22,6 +22,7 @@ namespace CoastCalculator
 					width = int.Parse(split[1]);
 					height = int.Parse(split[0]);	
 					calculator = new CellMapCoastlineCalculator(width, height);
+					row = 0;
 				}
 				else
 				{
@@ -127,7 +128,6 @@ namespace CoastCalculator
 				}
 			}
 		}
-		
 		
 		private bool HasWayToSea(int x, int y)
 		{

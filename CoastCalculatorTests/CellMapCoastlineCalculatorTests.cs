@@ -89,6 +89,7 @@ namespace CoastCalculator
 			Assert.AreEqual(expected, actual, "perimeter");
 		}
 		
+		[TestCase(1, 1, 4, 0, 0)]
 		[TestCase(5, 4, 10, 1, 1, 2, 1, 3, 1, 2, 2)]
 		[TestCase(5, 4, 10, 1, 1, 2, 1, 3, 1, 1, 2)]
 		[TestCase(5, 4, 14, 1, 1, 2, 1, 3, 1, 1, 2, 3, 2, 1, 3)]
