@@ -10,6 +10,7 @@
     <AssemblyName>CoastCalculator</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <AppDesignerFolder>Properties</AppDesignerFolder>
+    <NoWin32Manifest>False</NoWin32Manifest>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -21,6 +22,8 @@
     <Optimize>False</Optimize>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <StartAction>Project</StartAction>
+    <StartArguments>C:\Users\juanillo\Desktop\testdata\coast\13.in</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <OutputPath>bin\Release\</OutputPath>
@@ -53,6 +56,15 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="ProfilingSessions\Session20160703_110427.sdps" />
+    <Content Include="ProfilingSessions\Session20160703_110459.sdps" />
+    <Content Include="ProfilingSessions\Session20160703_110543.sdps" />
+    <Content Include="ProfilingSessions\Session20160703_134950.sdps" />
+    <Content Include="ProfilingSessions\Session20160703_135447.sdps" />
+    <Content Include="ProfilingSessions\Session20160703_135507.sdps" />
+    <Content Include="ProfilingSessions\Session20160703_135747.sdps" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

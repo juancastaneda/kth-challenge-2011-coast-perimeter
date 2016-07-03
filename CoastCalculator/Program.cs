@@ -7,20 +7,20 @@ namespace CoastCalculator
 	class Program
 	{
 		public static void Main(string[] args)
-		{		
+		{
 			const char land = '1';
 			CellMapCoastlineCalculator calculator = null;
 			int height = 2;
 			int width = 0;
 			var row = -1;
-			string line;	
+			string line;
 			while ((row < height) && (line = Console.ReadLine()) != null)
 			{
 				if (calculator == null)
 				{
 					string[] split = line.Split(new [] { ' ' }, StringSplitOptions.None);
 					width = int.Parse(split[1]);
-					height = int.Parse(split[0]);	
+					height = int.Parse(split[0]);
 					calculator = new CellMapCoastlineCalculator(width, height);
 					row = 0;
 				}
@@ -35,7 +35,7 @@ namespace CoastCalculator
 					}
 					
 					row++;
-				}				
+				}
 			}
 			
 			Console.WriteLine(calculator.GetPerimeter());
@@ -114,7 +114,7 @@ namespace CoastCalculator
 				
 				Console.WriteLine("{0}\t{1}", land, sea);
 			}
-	
+			
 			Console.WriteLine();
 		}
 
@@ -140,51 +140,42 @@ namespace CoastCalculator
 			{
 				return true;
 			}
-
-			var q = new Queue<Tuple<int,int>>();
-			q.Enqueue(Tuple.Create(x, y));
-			var visited = new List<Tuple<int,int>>();
-			while (q.Count != 0)
+			
+			var seaCellsCoveredWidthByHeight = new bool[mapWidth][];
+			for (int i = 0; i < mapWidth; i++)
 			{
-				var e = q.Dequeue();
-				var cellX = e.Item1;
-				var cellY = e.Item2;
-				if (IsLand(cellX, cellY))
-				{
-					continue;
-				}
+				seaCellsCoveredWidthByHeight[i] = new bool[mapHeight];
+			}
+
+			var toBrowse = new Queue<int>();
+			toBrowse.Enqueue(x);
+			toBrowse.Enqueue(y);
+			while (toBrowse.Count != 0)
+			{
+				var cellX = toBrowse.Dequeue();
+				var cellY = toBrowse.Dequeue();
 				
+				seaCellsCoveredWidthByHeight[cellX][cellY] = true;
 				if (seaCellsWidthByHeight[cellX][cellY])
 				{
 					return true;
 				}
 
-				if (HasOutsideNeighbours(cellX, cellY))
-				{
-					for (int i = 0; i < visited.Count; i++)
-					{
-						var v = visited[i];
-						seaCellsWidthByHeight[v.Item1][v.Item2] = true;
-					}
-					
+				if (HasOutsideNeighbours(cellX, cellY) || HasSeaNeighbours(cellX, cellY))
+				{					
 					return true;
 				}
 
-				visited.Add(e);
 				for (int i = 0; i < 4; i++)
 				{
 					var nX = cellX + neighboursX[i];
 					var nY = cellY + neighboursY[i];
-					if (!IsLand(nX, nY))
+					if (!IsLand(nX, nY) && !IsOutOfMap(nX, nY) && !seaCellsCoveredWidthByHeight[nX][nY])
 					{
-						var tuple = Tuple.Create(nX, nY);
-						if (!visited.Contains(tuple))
-						{
-							q.Enqueue(tuple);
-						}
+						toBrowse.Enqueue(nX);
+						toBrowse.Enqueue(nY);
 					}
 				}
-
 			}
 			
 			return false;
