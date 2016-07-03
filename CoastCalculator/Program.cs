@@ -48,230 +48,78 @@ namespace CoastCalculator
 	/// </summary>
 	public class CellMapCoastlineCalculator
 	{
-		private readonly int[] neighboursX = new int[]{ -1, 0, 1, 0 };
-		private readonly int[] neighboursY = new int[]{ 0, -1, 0, 1 };
+		private readonly int[] neighboursX = new int[]{ 0, 1, 0, -1 };
+		private readonly int[] neighboursY = new int[]{ 1, 0, -1, 0 };
 		
+		// has padding
+		private readonly bool?[][] cells;
 		private readonly int mapWidth;
 		private readonly int mapHeight;
-
-		private readonly bool[][] landCellsWidthByHeight;
-		private readonly bool[][] seaCellsWidthByHeight;
-		bool showMap;
-		
-		public CellMapCoastlineCalculator(int mapWidth, int mapHeight, bool showMap = false)
+		public CellMapCoastlineCalculator(int mapWidth, int mapHeight)
 		{
-			this.showMap = showMap;
 			this.mapHeight = mapHeight;
 			this.mapWidth = mapWidth;
-			landCellsWidthByHeight = new bool[mapWidth][];
-			seaCellsWidthByHeight = new bool[mapWidth][];
-			for (int x = 0; x < mapWidth; x++)
+			cells = new bool?[mapWidth + 2][];
+			var yLength = cells.Length;
+			for (int x = 0; x < yLength; x++)
 			{
-				landCellsWidthByHeight[x] = new bool[mapHeight];
-				seaCellsWidthByHeight[x] = new bool[mapHeight];
+				var ys = new bool?[mapHeight + 2];
+				cells[x] = ys;
+				var xLength = cells[x].Length;
+				for (int i = 0; i < xLength; i++)
+				{
+					ys[i] = false;
+				}
 			}
 		}
 
 		public void MarkLandAt(int cellX, int cellY)
 		{
-			landCellsWidthByHeight[cellX][cellY] = true;
+			cells[cellX + 1][cellY + 1] = true;
 		}
 		
 		public int GetPerimeter()
 		{
+			var q = new List<int>();
+			q.Add(0);
+			q.Add(0);
+			cells[0][0] = null;
+
 			var perimeter = 0;
-			CalculateSeaCells();
-			ShowMap();
-			
-			for (int x = 0; x < mapWidth; x++)
+			while (q.Count != 0)
 			{
-				for (int y = 0; y < mapHeight; y++)
+				var x = q[0];
+				q.RemoveAt(0);
+				var y = q[0];
+				q.RemoveAt(0);
+				for (int neighbour = 0; neighbour < 4; neighbour++)
 				{
-					perimeter += SeaNeighbourPerimeter(x, y);
-				}
-			}
-			
-			return perimeter;
-		}
-
-		void ShowMap()
-		{
-			if (!showMap)
-			{
-				return;
-			}
-			
-			Console.WriteLine("map");
-			for (int x = 0; x < mapWidth; x++)
-			{
-				var land = new System.Text.StringBuilder();
-				var sea = new System.Text.StringBuilder();
-				for (int y = 0; y < mapHeight; y++)
-				{
-					land.Append(landCellsWidthByHeight[x][y] ? '1' : '0');
-					sea.Append(seaCellsWidthByHeight[x][y] ? 'X' : '-');
-				}
-				
-				Console.WriteLine("{0}\t{1}", land, sea);
-			}
-			
-			Console.WriteLine();
-		}
-
-		private void CalculateSeaCells()
-		{
-			for (int x = 0; x < mapWidth; x++)
-			{
-				for (int y = 0; y < mapHeight; y++)
-				{
-					seaCellsWidthByHeight[x][y] = HasWayToSea(x, y);
-				}
-			}
-		}
-		
-		private bool HasWayToSea(int x, int y)
-		{
-			if (IsLand(x, y))
-			{
-				return false;
-			}
-			
-			if (HasOutsideNeighbours(x, y) || HasSeaNeighbours(x, y))
-			{
-				return true;
-			}
-			
-			var seaCellsCoveredWidthByHeight = new bool[mapWidth][];
-			for (int i = 0; i < mapWidth; i++)
-			{
-				seaCellsCoveredWidthByHeight[i] = new bool[mapHeight];
-			}
-
-			var toBrowse = new Queue<int>();
-			toBrowse.Enqueue(x);
-			toBrowse.Enqueue(y);
-			while (toBrowse.Count != 0)
-			{
-				var cellX = toBrowse.Dequeue();
-				var cellY = toBrowse.Dequeue();
-				
-				seaCellsCoveredWidthByHeight[cellX][cellY] = true;
-				if (seaCellsWidthByHeight[cellX][cellY])
-				{
-					return true;
-				}
-
-				if (HasOutsideNeighbours(cellX, cellY) || HasSeaNeighbours(cellX, cellY))
-				{					
-					return true;
-				}
-
-				for (int i = 0; i < 4; i++)
-				{
-					var nX = cellX + neighboursX[i];
-					var nY = cellY + neighboursY[i];
-					if (!IsLand(nX, nY) && !IsOutOfMap(nX, nY) && !seaCellsCoveredWidthByHeight[nX][nY])
+					int neighbourX = x + neighboursX[neighbour];
+					int neighbourY = y + neighboursY[neighbour];
+					if (neighbourX < 0 || neighbourX >= mapWidth + 2 ||
+					    neighbourY < 0 || neighbourY >= mapHeight + 2)
 					{
-						toBrowse.Enqueue(nX);
-						toBrowse.Enqueue(nY);
+						continue;
 					}
-				}
-			}
-			
-			return false;
-		}
-		
-		private bool HasOutsideNeighbours(int x, int y)
-		{
-			for (int i = 0; i < 4; i++)
-			{
-				var nX = x + neighboursX[i];
-				var nY = y + neighboursY[i];
-				if (IsOutOfMap(nX, nY))
-				{
-					return true;
-				}
-			}
-			
-			return false;
-		}
-		
-		private bool HasSeaNeighbours(int x, int y)
-		{
-			for (int i = 0; i < 4; i++)
-			{
-				var nX = x + neighboursX[i];
-				var nY = y + neighboursY[i];
-				if (seaCellsWidthByHeight[nX][nY])
-				{
-					return true;
-				}
-			}
-			
-			return false;
-		}
-		
-		private bool IsLake(int cellX, int cellY)
-		{
-			return !IsLand(cellX, cellY) &&
-			!seaCellsWidthByHeight[cellX][cellY];
-		}
-		
-		private int SeaNeighbourPerimeter(int cellX, int cellY)
-		{
-			if (!IsLand(cellX, cellY))
-			{
-				return 0;
-			}
-			
-			var perimeter = 0;
-			for (int i = 0; i < 4; i++)
-			{
-				var nX = cellX + neighboursX[i];
-				var nY = cellY + neighboursY[i];
-				if (IsSea(nX, nY))
-				{
-					perimeter++;
+					
+					var neighbourCell = cells[neighbourX][neighbourY];
+					if (neighbourCell.HasValue && neighbourCell.Value)
+					{
+						perimeter++;
+					}
+					
+					if (!neighbourCell.HasValue || neighbourCell.Value)
+					{
+						continue;
+					}
+					
+					cells[neighbourX][neighbourY] = null;
+					q.Add(neighbourX);
+					q.Add(neighbourY);
 				}
 			}
 			
 			return perimeter;
-		}
-		
-		private bool IsSea(int cellX, int cellY)
-		{
-			if (IsOutOfMap(cellX, cellY))
-			{
-				return true;
-			}
-			
-			if (IsLand(cellX, cellY))
-			{
-				return false;
-			}
-			
-			if (IsLake(cellX, cellY))
-			{
-				return false;
-			}
-			
-			return true;
-		}
-		
-		private bool IsOutOfMap(int cellX, int cellY)
-		{
-			return cellX < 0 || cellX >= mapWidth ||
-			cellY < 0 || cellY >= mapHeight;
-		}
-		
-		private bool IsLand(int cellX, int cellY)
-		{
-			if (IsOutOfMap(cellX, cellY))
-			{
-				return false;
-			}
-			
-			return landCellsWidthByHeight[cellX][cellY];
 		}
 	}
 }

@@ -102,8 +102,7 @@ namespace CoastCalculator
 		{
 			var fixture = new Fixture()
 				.WithMapHeight(height)
-				.WithMapWidth(width)
-				.ShowMap();
+				.WithMapWidth(width);
 			var sut = fixture.CreateSUT();
 			
 			foreach (var xy in shapeCells
@@ -155,8 +154,7 @@ namespace CoastCalculator
 		{
 			var fixture = new Fixture()
 				.WithMapHeight(height)
-				.WithMapWidth(width)
-				.ShowMap();
+				.WithMapWidth(width);
 			var sut = fixture.CreateSUT();
 			
 			foreach (var xy in shapeCells
@@ -169,7 +167,6 @@ namespace CoastCalculator
 			
 			var actual = sut.GetPerimeter();
 			
-			Console.WriteLine("Expected {0} Actual {1}", expectedPerimeter, actual);
 			Assert.AreEqual(expectedPerimeter, actual, "perimeter");
 		}
 		
@@ -178,12 +175,6 @@ namespace CoastCalculator
 			private int mapWidth;
 			private int mapHeight;
 
-			bool showMap;
-			public Fixture ShowMap()
-			{
-				showMap = true;
-				return this;
-			}
 			public Fixture WithMapHeight(int value)
 			{
 				mapHeight = value;
@@ -198,7 +189,7 @@ namespace CoastCalculator
 			
 			public CellMapCoastlineCalculator CreateSUT()
 			{
-				return new CellMapCoastlineCalculator(mapWidth, mapHeight, showMap);
+				return new CellMapCoastlineCalculator(mapWidth, mapHeight);
 			}
 		}
 	}
