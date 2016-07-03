@@ -1,5 +1,6 @@
 ﻿
 using System;
+using System.Collections.Generic;
 
 namespace CoastCalculator
 {
@@ -46,20 +47,27 @@ namespace CoastCalculator
 	/// </summary>
 	public class CellMapCoastlineCalculator
 	{
+		private readonly int[] neighboursX = new int[]{ -1, 0, 1, 0 };
+		private readonly int[] neighboursY = new int[]{ 0, -1, 0, 1 };
+		
 		private readonly int mapWidth;
-
 		private readonly int mapHeight;
 
 		private readonly bool[][] landCellsWidthByHeight;
-
-		public CellMapCoastlineCalculator(int mapWidth, int mapHeight)
+		private readonly bool[][] seaCellsWidthByHeight;
+		bool showMap;
+		
+		public CellMapCoastlineCalculator(int mapWidth, int mapHeight, bool showMap = false)
 		{
+			this.showMap = showMap;
 			this.mapHeight = mapHeight;
 			this.mapWidth = mapWidth;
 			landCellsWidthByHeight = new bool[mapWidth][];
+			seaCellsWidthByHeight = new bool[mapWidth][];
 			for (int x = 0; x < mapWidth; x++)
 			{
 				landCellsWidthByHeight[x] = new bool[mapHeight];
+				seaCellsWidthByHeight[x] = new bool[mapHeight];
 			}
 		}
 
@@ -71,6 +79,9 @@ namespace CoastCalculator
 		public int GetPerimeter()
 		{
 			var perimeter = 0;
+			CalculateSeaCells();
+			ShowMap();
+			
 			for (int x = 0; x < mapWidth; x++)
 			{
 				for (int y = 0; y < mapHeight; y++)
@@ -82,12 +93,137 @@ namespace CoastCalculator
 			return perimeter;
 		}
 
+		void ShowMap()
+		{
+			if (!showMap)
+			{
+				return;
+			}
+			
+			Console.WriteLine("map");
+			for (int x = 0; x < mapWidth; x++)
+			{
+				var land = new System.Text.StringBuilder();
+				var sea = new System.Text.StringBuilder();
+				for (int y = 0; y < mapHeight; y++)
+				{
+					land.Append(landCellsWidthByHeight[x][y] ? '1' : '0');
+					sea.Append(seaCellsWidthByHeight[x][y] ? 'X' : '-');
+				}
+				
+				Console.WriteLine("{0}\t{1}", land, sea);
+			}
+	
+			Console.WriteLine();
+		}
+
+		private void CalculateSeaCells()
+		{
+			for (int x = 0; x < mapWidth; x++)
+			{
+				for (int y = 0; y < mapHeight; y++)
+				{
+					seaCellsWidthByHeight[x][y] = HasWayToSea(x, y);
+				}
+			}
+		}
+		
+		
+		private bool HasWayToSea(int x, int y)
+		{
+			if (IsLand(x, y))
+			{
+				return false;
+			}
+			
+			if (HasOutsideNeighbours(x, y) || HasSeaNeighbours(x, y))
+			{
+				return true;
+			}
+
+			var q = new Queue<Tuple<int,int>>();
+			q.Enqueue(Tuple.Create(x, y));
+			var visited = new List<Tuple<int,int>>();
+			while (q.Count != 0)
+			{
+				var e = q.Dequeue();
+				var cellX = e.Item1;
+				var cellY = e.Item2;
+				if (IsLand(cellX, cellY))
+				{
+					continue;
+				}
+				
+				if (seaCellsWidthByHeight[cellX][cellY])
+				{
+					return true;
+				}
+
+				if (HasOutsideNeighbours(cellX, cellY))
+				{
+					for (int i = 0; i < visited.Count; i++)
+					{
+						var v = visited[i];
+						seaCellsWidthByHeight[v.Item1][v.Item2] = true;
+					}
+					
+					return true;
+				}
+
+				visited.Add(e);
+				for (int i = 0; i < 4; i++)
+				{
+					var nX = cellX + neighboursX[i];
+					var nY = cellY + neighboursY[i];
+					if (!IsLand(nX, nY))
+					{
+						var tuple = Tuple.Create(nX, nY);
+						if (!visited.Contains(tuple))
+						{
+							q.Enqueue(tuple);
+						}
+					}
+				}
+
+			}
+			
+			return false;
+		}
+		
+		private bool HasOutsideNeighbours(int x, int y)
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				var nX = x + neighboursX[i];
+				var nY = y + neighboursY[i];
+				if (IsOutOfMap(nX, nY))
+				{
+					return true;
+				}
+			}
+			
+			return false;
+		}
+		
+		private bool HasSeaNeighbours(int x, int y)
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				var nX = x + neighboursX[i];
+				var nY = y + neighboursY[i];
+				if (seaCellsWidthByHeight[nX][nY])
+				{
+					return true;
+				}
+			}
+			
+			return false;
+		}
+		
 		private bool IsLake(int cellX, int cellY)
 		{
-			return IsLand(cellX - 1, cellY) &&
-			IsLand(cellX, cellY - 1) &&
-			IsLand(cellX + 1, cellY) &&
-			IsLand(cellX, cellY + 1);
+			return !IsLand(cellX, cellY) &&
+			!seaCellsWidthByHeight[cellX][cellY];
 		}
 		
 		private int SeaNeighbourPerimeter(int cellX, int cellY)
@@ -98,23 +234,16 @@ namespace CoastCalculator
 			}
 			
 			var perimeter = 0;
-			if (IsSea(cellX - 1, cellY))
+			for (int i = 0; i < 4; i++)
 			{
-				perimeter++;
+				var nX = cellX + neighboursX[i];
+				var nY = cellY + neighboursY[i];
+				if (IsSea(nX, nY))
+				{
+					perimeter++;
+				}
 			}
-			if (IsSea(cellX, cellY - 1))
-			{
-				perimeter++;
-			}
-			if (IsSea(cellX + 1, cellY))
-			{
-				perimeter++;
-			}
-			if (IsSea(cellX, cellY + 1))
-			{
-				perimeter++;
-			}
-		
+			
 			return perimeter;
 		}
 		
@@ -125,12 +254,17 @@ namespace CoastCalculator
 				return true;
 			}
 			
+			if (IsLand(cellX, cellY))
+			{
+				return false;
+			}
+			
 			if (IsLake(cellX, cellY))
 			{
 				return false;
 			}
 			
-			return !landCellsWidthByHeight[cellX][cellY];
+			return true;
 		}
 		
 		private bool IsOutOfMap(int cellX, int cellY)
